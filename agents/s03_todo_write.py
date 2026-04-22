@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Harness: planning -- keeping the model on course without scripting the route.
 """
-s03_todo_write.py - TodoWrite
+claude-code-mini | s03_todo_write.py - TodoWrite
 
 The model tracks its own progress via a TodoManager. A nag reminder
 forces it to keep updating when it forgets.
@@ -25,6 +25,9 @@ forces it to keep updating when it forgets.
                       inject <reminder>
 
 Key insight: "The agent can track its own progress -- and I can see it."
+
+Run:
+    python agents/s03_todo_write.py
 """
 
 import os
@@ -50,6 +53,8 @@ Prefer tools over prose."""
 
 # -- TodoManager: structured state the LLM writes to --
 class TodoManager:
+    """Manages todo items for tracking task progress."""
+
     def __init__(self):
         self.items = []
 
@@ -91,12 +96,14 @@ TODO = TodoManager()
 
 # -- Tool implementations --
 def safe_path(p: str) -> Path:
+    """Resolve path and ensure it stays within workspace."""
     path = (WORKDIR / p).resolve()
     if not path.is_relative_to(WORKDIR):
         raise ValueError(f"Path escapes workspace: {p}")
     return path
 
 def run_bash(command: str) -> str:
+    """Execute a bash command with safety checks."""
     dangerous = ["rm -rf /", "sudo", "shutdown", "reboot", "> /dev/"]
     if any(d in command for d in dangerous):
         return "Error: Dangerous command blocked"
@@ -109,6 +116,7 @@ def run_bash(command: str) -> str:
         return "Error: Timeout (120s)"
 
 def run_read(path: str, limit: int = None) -> str:
+    """Read file contents with optional line limit."""
     try:
         lines = safe_path(path).read_text().splitlines()
         if limit and limit < len(lines):
@@ -118,6 +126,7 @@ def run_read(path: str, limit: int = None) -> str:
         return f"Error: {e}"
 
 def run_write(path: str, content: str) -> str:
+    """Write content to a file, creating parent directories if needed."""
     try:
         fp = safe_path(path)
         fp.parent.mkdir(parents=True, exist_ok=True)
@@ -127,6 +136,7 @@ def run_write(path: str, content: str) -> str:
         return f"Error: {e}"
 
 def run_edit(path: str, old_text: str, new_text: str) -> str:
+    """Replace exact text in a file."""
     try:
         fp = safe_path(path)
         content = fp.read_text()

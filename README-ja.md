@@ -1,4 +1,4 @@
-# Learn Claude Code -- 真の Agent のための Harness Engineering
+# claude-code-mini -- 真の Agent のための Harness Engineering
 
 [English](./README.md) | [中文](./README-zh.md) | [日本語](./README-ja.md)
 

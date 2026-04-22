@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Harness: persistent tasks -- goals that outlive any single conversation.
 """
-s07_task_system.py - Tasks
+claude-code-mini | s07_task_system.py - Tasks
 
 Tasks persist as JSON files in .tasks/ so they survive context compression.
 Each task has a dependency graph (blockedBy).
@@ -20,6 +20,9 @@ Each task has a dependency graph (blockedBy).
          +--- completing task 1 removes it from task 2's blockedBy
 
 Key insight: "State that survives compression -- because it's outside the conversation."
+
+Run:
+    python agents/s07_task_system.py
 """
 
 import json
@@ -45,6 +48,8 @@ SYSTEM = f"You are a coding agent at {WORKDIR}. Use task tools to plan and track
 
 # -- TaskManager: CRUD with dependency graph, persisted as JSON files --
 class TaskManager:
+    """Manage tasks with persistence and dependency tracking."""
+
     def __init__(self, tasks_dir: Path):
         self.dir = tasks_dir
         self.dir.mkdir(exist_ok=True)

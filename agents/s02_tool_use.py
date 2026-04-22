@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Harness: tool dispatch -- expanding what the model can reach.
 """
-s02_tool_use.py - Tools
+claude-code-mini | s02_tool_use.py - Tools
 
 The agent loop from s01 didn't change. We just added tools to the array
 and a dispatch map to route calls.
@@ -17,6 +17,9 @@ and a dispatch map to route calls.
                                      +------------------+
 
 Key insight: "The loop didn't change at all. I just added tools."
+
+Run:
+    python agents/s02_tool_use.py
 """
 
 import os

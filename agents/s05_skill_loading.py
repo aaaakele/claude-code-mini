@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Harness: on-demand knowledge -- domain expertise, loaded when the model asks.
 """
-s05_skill_loading.py - Skills
+claude-code-mini | s05_skill_loading.py - Skills
 
 Two-layer skill injection that avoids bloating the system prompt:
 
@@ -33,6 +33,9 @@ Two-layer skill injection that avoids bloating the system prompt:
     +--------------------------------------+
 
 Key insight: "Don't put everything in the system prompt. Load on demand."
+
+Run:
+    python agents/s05_skill_loading.py
 """
 
 import os
@@ -57,6 +60,8 @@ SKILLS_DIR = WORKDIR / "skills"
 
 # -- SkillLoader: scan skills/<name>/SKILL.md with YAML frontmatter --
 class SkillLoader:
+    """Load and manage skills from SKILL.md files."""
+
     def __init__(self, skills_dir: Path):
         self.skills_dir = skills_dir
         self.skills = {}

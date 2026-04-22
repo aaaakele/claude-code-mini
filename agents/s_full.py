@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Harness: all mechanisms combined -- the complete cockpit for the model.
 """
-s_full.py - Full Reference Agent
+claude-code-mini | s_full.py - Full Reference Agent
 
 Capstone implementation combining every mechanism from s01-s11.
 Session s12 (task-aware worktree isolation) is taught separately.
@@ -34,6 +34,9 @@ NOT a teaching session -- this is the "put it all together" reference.
     +------------------------------------------------------------------+
 
     REPL commands: /compact /tasks /team /inbox
+
+Run:
+    python agents/s_full.py
 """
 
 import json
@@ -72,12 +75,16 @@ VALID_MSG_TYPES = {"message", "broadcast", "shutdown_request",
 
 # === SECTION: base_tools ===
 def safe_path(p: str) -> Path:
+    """Resolve path and ensure it stays within workspace."""
+
     path = (WORKDIR / p).resolve()
     if not path.is_relative_to(WORKDIR):
         raise ValueError(f"Path escapes workspace: {p}")
     return path
 
 def run_bash(command: str) -> str:
+    """Execute a bash command with safety checks."""
+
     dangerous = ["rm -rf /", "sudo", "shutdown", "reboot", "> /dev/"]
     if any(d in command for d in dangerous):
         return "Error: Dangerous command blocked"
@@ -90,6 +97,8 @@ def run_bash(command: str) -> str:
         return "Error: Timeout (120s)"
 
 def run_read(path: str, limit: int = None) -> str:
+    """Read file contents with optional line limit."""
+
     try:
         lines = safe_path(path).read_text().splitlines()
         if limit and limit < len(lines):
@@ -99,6 +108,8 @@ def run_read(path: str, limit: int = None) -> str:
         return f"Error: {e}"
 
 def run_write(path: str, content: str) -> str:
+    """Write content to a file, creating parent directories if needed."""
+
     try:
         fp = safe_path(path)
         fp.parent.mkdir(parents=True, exist_ok=True)
@@ -108,6 +119,8 @@ def run_write(path: str, content: str) -> str:
         return f"Error: {e}"
 
 def run_edit(path: str, old_text: str, new_text: str) -> str:
+    """Replace exact text in a file."""
+
     try:
         fp = safe_path(path)
         c = fp.read_text()
@@ -121,6 +134,8 @@ def run_edit(path: str, old_text: str, new_text: str) -> str:
 
 # === SECTION: todos (s03) ===
 class TodoManager:
+    """Manage todo items for task tracking."""
+
     def __init__(self):
         self.items = []
 
@@ -197,6 +212,8 @@ def run_subagent(prompt: str, agent_type: str = "Explore") -> str:
 
 # === SECTION: skills (s05) ===
 class SkillLoader:
+    """Load and manage skills from SKILL.md files."""
+
     def __init__(self, skills_dir: Path):
         self.skills = {}
         if skills_dir.exists():
@@ -225,9 +242,13 @@ class SkillLoader:
 
 # === SECTION: compression (s06) ===
 def estimate_tokens(messages: list) -> int:
+    """Estimate token count from message list."""
+
     return len(json.dumps(messages, default=str)) // 4
 
 def microcompact(messages: list):
+    """Compact old tool results to reduce context size."""
+
     indices = []
     for i, msg in enumerate(messages):
         if msg["role"] == "user" and isinstance(msg.get("content"), list):
@@ -260,6 +281,8 @@ def auto_compact(messages: list) -> list:
 
 # === SECTION: file_tasks (s07) ===
 class TaskManager:
+    """Manage persistent file-based tasks."""
+
     def __init__(self):
         TASKS_DIR.mkdir(exist_ok=True)
 
@@ -326,6 +349,8 @@ class TaskManager:
 
 # === SECTION: background (s08) ===
 class BackgroundManager:
+    """Manage background task execution with notifications."""
+
     def __init__(self):
         self.tasks = {}
         self.notifications = Queue()
@@ -362,6 +387,8 @@ class BackgroundManager:
 
 # === SECTION: messaging (s09) ===
 class MessageBus:
+    """Handle message passing between teammates via JSONL inboxes."""
+
     def __init__(self):
         INBOX_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -397,6 +424,8 @@ plan_requests = {}
 
 # === SECTION: team (s09/s11) ===
 class TeammateManager:
+    """Manage autonomous teammates with messaging and task claiming."""
+
     def __init__(self, bus: MessageBus, task_mgr: TaskManager):
         TEAM_DIR.mkdir(exist_ok=True)
         self.bus = bus

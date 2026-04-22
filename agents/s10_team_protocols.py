@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Harness: protocols -- structured handshakes between models.
 """
-s10_team_protocols.py - Team Protocols
+claude-code-mini | s10_team_protocols.py - Team Protocols
 
 Shutdown protocol and plan approval protocol, both using the same
 request_id correlation pattern. Builds on s09's team messaging.
@@ -45,6 +45,9 @@ request_id correlation pattern. Builds on s09's team messaging.
     Trackers: {request_id: {"target|from": name, "status": "pending|..."}}
 
 Key insight: "Same request_id correlation pattern, two domains."
+
+Run:
+    python agents/s10_team_protocols.py
 """
 
 import json
@@ -86,6 +89,8 @@ _tracker_lock = threading.Lock()
 
 # -- MessageBus: JSONL inbox per teammate --
 class MessageBus:
+    """Handle message passing between teammates via JSONL inboxes."""
+
     def __init__(self, inbox_dir: Path):
         self.dir = inbox_dir
         self.dir.mkdir(parents=True, exist_ok=True)
@@ -132,6 +137,8 @@ BUS = MessageBus(INBOX_DIR)
 
 # -- TeammateManager with shutdown + plan approval --
 class TeammateManager:
+    """Manage teammates with shutdown and plan approval protocols."""
+
     def __init__(self, team_dir: Path):
         self.dir = team_dir
         self.dir.mkdir(exist_ok=True)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Harness: team mailboxes -- multiple models, coordinated through files.
 """
-s09_agent_teams.py - Agent Teams
+claude-code-mini | s09_agent_teams.py - Agent Teams
 
 Persistent named agents with file-based JSONL inboxes. Each teammate runs
 its own agent loop in a separate thread. Communication via append-only inboxes.
@@ -41,6 +41,9 @@ its own agent loop in a separate thread. Communication via append-only inboxes.
     +-------------------------+-----------------------------------+
 
 Key insight: "Teammates that can talk to each other."
+
+Run:
+    python agents/s09_agent_teams.py
 """
 
 import json
@@ -76,6 +79,8 @@ VALID_MSG_TYPES = {
 
 # -- MessageBus: JSONL inbox per teammate --
 class MessageBus:
+    """Handle message passing between teammates via JSONL inboxes."""
+
     def __init__(self, inbox_dir: Path):
         self.dir = inbox_dir
         self.dir.mkdir(parents=True, exist_ok=True)
@@ -122,6 +127,8 @@ BUS = MessageBus(INBOX_DIR)
 
 # -- TeammateManager: persistent named agents with config.json --
 class TeammateManager:
+    """Manage persistent named teammates with configuration."""
+
     def __init__(self, team_dir: Path):
         self.dir = team_dir
         self.dir.mkdir(exist_ok=True)

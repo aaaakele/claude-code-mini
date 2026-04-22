@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Harness: directory isolation -- parallel execution lanes that never collide.
 """
-s12_worktree_task_isolation.py - Worktree + Task Isolation
+claude-code-mini | s12_worktree_task_isolation.py - Worktree + Task Isolation
 
 Directory-level isolation for parallel task execution.
 Tasks are the control plane and worktrees are the execution plane.
@@ -28,6 +28,9 @@ Tasks are the control plane and worktrees are the execution plane.
       }
 
 Key insight: "Isolate by directory, coordinate by task ID."
+
+Run:
+    python agents/s12_worktree_task_isolation.py
 """
 
 import json
@@ -81,6 +84,8 @@ SYSTEM = (
 
 # -- EventBus: append-only lifecycle events for observability --
 class EventBus:
+    """Manage append-only lifecycle events for observability."""
+
     def __init__(self, event_log_path: Path):
         self.path = event_log_path
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -120,6 +125,8 @@ class EventBus:
 
 # -- TaskManager: persistent task board with optional worktree binding --
 class TaskManager:
+    """Manage persistent tasks with optional worktree binding."""
+
     def __init__(self, tasks_dir: Path):
         self.dir = tasks_dir
         self.dir.mkdir(parents=True, exist_ok=True)
@@ -223,6 +230,8 @@ EVENTS = EventBus(REPO_ROOT / ".worktrees" / "events.jsonl")
 
 # -- WorktreeManager: create/list/run/remove git worktrees + lifecycle index --
 class WorktreeManager:
+    """Manage git worktrees with lifecycle tracking."""
+
     def __init__(self, repo_root: Path, tasks: TaskManager, events: EventBus):
         self.repo_root = repo_root
         self.tasks = tasks

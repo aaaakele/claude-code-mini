@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Harness: autonomy -- models that find work without being told.
 """
-s11_autonomous_agents.py - Autonomous Agents
+claude-code-mini | s11_autonomous_agents.py - Autonomous Agents
 
 Idle cycle with task board polling, auto-claiming unclaimed tasks, and
 identity re-injection after context compression. Builds on s10's protocols.
@@ -33,6 +33,9 @@ identity re-injection after context compression. Builds on s10's protocols.
     "You are 'coder', role: backend, team: my-team"
 
 Key insight: "The agent finds work itself."
+
+Run:
+    python agents/s11_autonomous_agents.py
 """
 
 import json
@@ -79,6 +82,8 @@ _claim_lock = threading.Lock()
 
 # -- MessageBus: JSONL inbox per teammate --
 class MessageBus:
+    """Handle message passing between teammates via JSONL inboxes."""
+
     def __init__(self, inbox_dir: Path):
         self.dir = inbox_dir
         self.dir.mkdir(parents=True, exist_ok=True)
@@ -166,6 +171,8 @@ def make_identity_block(name: str, role: str, team_name: str) -> dict:
 
 # -- Autonomous TeammateManager --
 class TeammateManager:
+    """Manage autonomous teammates with idle polling and auto-claiming."""
+
     def __init__(self, team_dir: Path):
         self.dir = team_dir
         self.dir.mkdir(exist_ok=True)
@@ -221,6 +228,7 @@ class TeammateManager:
         )
         messages = [{"role": "user", "content": prompt}]
         tools = self._teammate_tools()
+        rate_limit_attempt = 0
 
         while True:
             # -- WORK PHASE: standard agent loop --
@@ -239,9 +247,18 @@ class TeammateManager:
                         tools=tools,
                         max_tokens=8000,
                     )
-                except Exception:
+                except Exception as e:
+                    # Avoid exiting the teammate thread immediately on HTTP 429.
+                    # Limited retry with exponential backoff.
+                    rate_limit_attempt += 1
+                    err_msg = str(e).lower()
+                    is_rate_limited = ("429" in err_msg) or ("rate limit" in err_msg) or ("rate-limit" in err_msg)
+                    if is_rate_limited and rate_limit_attempt <= 6:
+                        time.sleep(2 ** (rate_limit_attempt - 1))
+                        continue
                     self._set_status(name, "idle")
                     return
+                rate_limit_attempt = 0
                 messages.append({"role": "assistant", "content": response.content})
                 if response.stop_reason != "tool_use":
                     break
@@ -390,17 +407,40 @@ def _safe_path(p: str) -> Path:
 
 def _run_bash(command: str) -> str:
     dangerous = ["rm -rf /", "sudo", "shutdown", "reboot"]
+    command = (command or "").strip()
+    # Some LLM tool calls wrap the whole command in quotes like "'cat .env'".
+    # Strip a single pair of matching surrounding quotes to avoid executing a string.
+    if len(command) >= 2 and command[0] in ("'", '"') and command[-1] == command[0]:
+        command = command[1:-1].strip()
     if any(d in command for d in dangerous):
         return "Error: Dangerous command blocked"
     try:
-        r = subprocess.run(
-            command, shell=True, cwd=WORKDIR,
-            capture_output=True, text=True, timeout=120,
-        )
+        # This project calls the tool "bash", but on Windows we should not rely on
+        # cmd.exe having *nix utilities like `ls`/`cat`.
+        # PowerShell provides common aliases (`ls` -> Get-ChildItem, `cat` -> Get-Content).
+        if os.name == "nt":
+            r = subprocess.run(
+                ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command],
+                cwd=WORKDIR,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+        else:
+            # Use bash as the executor on non-Windows.
+            r = subprocess.run(
+                ["bash", "-lc", command],
+                cwd=WORKDIR,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
         out = (r.stdout + r.stderr).strip()
         return out[:50000] if out else "(no output)"
     except subprocess.TimeoutExpired:
         return "Error: Timeout (120s)"
+    except FileNotFoundError as e:
+        return f"Error: Shell not found: {e}"
 
 
 def _run_read(path: str, limit: int = None) -> str:
@@ -525,13 +565,29 @@ def agent_loop(messages: list):
                 "role": "user",
                 "content": f"<inbox>{json.dumps(inbox, indent=2)}</inbox>",
             })
-        response = client.messages.create(
-            model=MODEL,
-            system=SYSTEM,
-            messages=messages,
-            tools=TOOLS,
-            max_tokens=8000,
-        )
+        # Rate limit can happen quickly when multiple teammates are running.
+        # Add backoff retries so the lead doesn't crash on HTTP 429.
+        last_err = None
+        for attempt in range(6):
+            try:
+                response = client.messages.create(
+                    model=MODEL,
+                    system=SYSTEM,
+                    messages=messages,
+                    tools=TOOLS,
+                    max_tokens=8000,
+                )
+                break
+            except Exception as e:
+                last_err = e
+                msg = str(e).lower()
+                if ("429" in msg) or ("rate limit" in msg) or ("rate-limit" in msg):
+                    # Exponential backoff: 1s,2s,4s,8s,16s,32s
+                    time.sleep(2 ** attempt)
+                    continue
+                raise
+        else:
+            raise last_err
         messages.append({"role": "assistant", "content": response.content})
         if response.stop_reason != "tool_use":
             return

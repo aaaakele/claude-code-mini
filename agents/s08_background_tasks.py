@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Harness: background execution -- the model thinks while the harness waits.
 """
-s08_background_tasks.py - Background Tasks
+claude-code-mini | s08_background_tasks.py - Background Tasks
 
 Run commands in background threads. A notification queue is drained
 before each LLM call to deliver results.
@@ -23,6 +23,9 @@ before each LLM call to deliver results.
                  +-- notification queue --> [results injected]
 
 Key insight: "Fire and forget -- the agent doesn't block while the command runs."
+
+Run:
+    python agents/s08_background_tasks.py
 """
 
 import os
@@ -48,6 +51,8 @@ SYSTEM = f"You are a coding agent at {WORKDIR}. Use background_run for long-runn
 
 # -- BackgroundManager: threaded execution + notification queue --
 class BackgroundManager:
+    """Manage background task execution with notifications."""
+
     def __init__(self):
         self.tasks = {}  # task_id -> {status, result, command}
         self._notification_queue = []  # completed task results

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Harness: the loop -- the model's first connection to the real world.
 """
-s01_agent_loop.py - The Agent Loop
+claude-code-mini | s01_agent_loop.py - The Agent Loop
 
 The entire secret of an AI coding agent in one pattern:
 
@@ -22,6 +22,9 @@ The entire secret of an AI coding agent in one pattern:
 This is the core loop: feed tool results back to the model
 until the model decides to stop. Production agents layer
 policy, hooks, and lifecycle controls on top.
+
+Run:
+    python agents/s01_agent_loop.py
 """
 
 import os

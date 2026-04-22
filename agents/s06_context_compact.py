@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Harness: compression -- clean memory for infinite sessions.
 """
-s06_context_compact.py - Compact
+claude-code-mini | s06_context_compact.py - Compact
 
 Three-layer compression pipeline so the agent can work forever:
 
@@ -32,6 +32,9 @@ Three-layer compression pipeline so the agent can work forever:
                   Same as auto, triggered manually.
 
 Key insight: "The agent can forget strategically and keep working forever."
+
+Run:
+    python agents/s06_context_compact.py
 """
 
 import json

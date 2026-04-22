@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Harness: context isolation -- protecting the model's clarity of thought.
 """
-s04_subagent.py - Subagents
+claude-code-mini | s04_subagent.py - Subagents
 
 Spawn a child agent with fresh messages=[]. The child works in its own
 context, sharing the filesystem, then returns only a summary to the parent.
@@ -21,6 +21,9 @@ context, sharing the filesystem, then returns only a summary to the parent.
     Subagent context is discarded.
 
 Key insight: "Process isolation gives context isolation for free."
+
+Run:
+    python agents/s04_subagent.py
 """
 
 import os
